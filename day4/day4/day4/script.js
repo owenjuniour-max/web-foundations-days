@@ -1,109 +1,78 @@
-// Select required DOM elements
-const noteText = document.getElementById("note-text");
-const charCount = document.getElementById("char-count");
-const wordCount = document.getElementById("word-count");
-const clearBtn = document.getElementById("clear-btn");
-const themeToggle = document.getElementById("theme-toggle");
+// ---------- 1. Elements and settings ----------
+const textArea = document.querySelector("#note-text");
+const charCount = document.querySelector("#char-count");
+const wordCount = document.querySelector("#word-count");
+const clearBtn = document.querySelector("#clear-btn");
+const themeBtn = document.querySelector("#theme-toggle");
 
-// Storage keys
-const DRAFT_KEY = "note_draft";
+const MAX = 200;
+const WARN_AT = 180;
+const DRAFT_KEY = "note-draft";
 const THEME_KEY = "theme";
 
-/**
- * Updates character count, word count, and counter warning classes
- */
-function updateCounts() {
-  const text = noteText.value;
-  const chars = text.length;
-
-  // Character counter: "N / 200 characters"
-  charCount.textContent = `${chars} / 200 characters`;
-
-  // Warning classes:
-  // warning: orange text when over 180 characters
-  // over: red, bold text when over 200 characters
-  if (chars > 200) {
-    charCount.classList.remove("warning");
-    charCount.classList.add("over");
-  } else if (chars > 180) {
-    charCount.classList.add("warning");
-    charCount.classList.remove("over");
-  } else {
-    charCount.classList.remove("warning");
-    charCount.classList.remove("over");
-  }
-
-  // Word counter: "N words"
+// ---------- 2. Counting ----------
+function countWords(text) {
   const trimmed = text.trim();
-  const words = trimmed === "" ? 0 : trimmed.split(/\s+/).length;
-  wordCount.textContent = `${words} words`;
+  if (trimmed === "") return 0;
+  return trimmed.split(/\s+/).length; // split on any run of spaces
 }
 
-/**
- * Saves current note draft to localStorage
- */
+function updateCounts() {
+  const text = textArea.value;
+  const chars = text.length;
+  const words = countWords(text);
+
+  charCount.textContent = `${chars} / ${MAX} characters`;
+  wordCount.textContent = words === 1 ? "1 word" : `${words} words`;
+
+  // remove both classes, then add the one that applies (if any)
+  charCount.classList.remove("warning", "over");
+  if (chars > MAX) {
+    charCount.classList.add("over");
+  } else if (chars > WARN_AT) {
+    charCount.classList.add("warning");
+  }
+}
+
+// ---------- 3. Draft saving ----------
 function saveDraft() {
-  localStorage.setItem(DRAFT_KEY, noteText.value);
+  localStorage.setItem(DRAFT_KEY, textArea.value);
 }
 
-/**
- * Clears the textarea, resets counters, and removes draft from localStorage
- */
 function clearAll() {
-  noteText.value = "";
+  textArea.value = "";
   localStorage.removeItem(DRAFT_KEY);
   updateCounts();
+  textArea.focus();
 }
 
-/**
- * Toggles dark mode, updates button label, and persists choice
- */
+// ---------- 4. Theme ----------
+function applyTheme(theme) {
+  const isDark = theme === "dark";
+  document.body.classList.toggle("dark", isDark); // add if true, remove if false
+  themeBtn.textContent = isDark ? "Light mode" : "Dark mode";
+}
+
 function toggleTheme() {
-  document.body.classList.toggle("dark");
-  const isDark = document.body.classList.contains("dark");
-  themeToggle.textContent = isDark ? "Light mode" : "Dark mode";
-  localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+  const newTheme = document.body.classList.contains("dark") ? "light" : "dark";
+  applyTheme(newTheme);
+  localStorage.setItem(THEME_KEY, newTheme);
 }
 
-// Event Listeners
-
-// 1. Input event on textarea: update counts and save draft
-noteText.addEventListener("input", () => {
+// ---------- 5. Events ----------
+textArea.addEventListener("input", () => {
   updateCounts();
   saveDraft();
 });
 
-// 2. Clear button click: clear everything
+textArea.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") clearAll();
+});
+
 clearBtn.addEventListener("click", clearAll);
+themeBtn.addEventListener("click", toggleTheme);
 
-// 3. Escape key inside textarea: clear everything
-noteText.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    clearAll();
-  }
-});
-
-// 4. Theme toggle button click
-themeToggle.addEventListener("click", toggleTheme);
-
-// Initialize on page load: restore draft, restore theme, update counts
-window.addEventListener("DOMContentLoaded", () => {
-  // Restore theme
-  const savedTheme = localStorage.getItem(THEME_KEY);
-  if (savedTheme === "dark") {
-    document.body.classList.add("dark");
-    themeToggle.textContent = "Light mode";
-  } else {
-    document.body.classList.remove("dark");
-    themeToggle.textContent = "Dark mode";
-  }
-
-  // Restore draft
-  const savedDraft = localStorage.getItem(DRAFT_KEY);
-  if (savedDraft !== null) {
-    noteText.value = savedDraft;
-  }
-
-  // Update counts
-  updateCounts();
-});
+// ---------- 6. Restore saved state on page load ----------
+textArea.value = localStorage.getItem(DRAFT_KEY) || "";
+applyTheme(localStorage.getItem(THEME_KEY) || "light");
+updateCounts();
