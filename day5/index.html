@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Day 5 - User Directory</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="users.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>User Directory</h1>
+      <p>Asynchronous Data Fetching &amp; Live Client-Side Filtering</p>
+    </header>
+
+    <main>
+      <section class="controls-section">
+        <div class="actions-bar">
+          <button id="load-users" type="button">Load Users</button>
+        </div>
+
+        <div class="filter-group">
+          <label for="filter-input">Filter by name:</label>
+          <input
+            type="text"
+            id="filter-input"
+            placeholder="Type a name to filter..."
+          />
+        </div>
+
+        <p id="status"></p>
+      </section>
+
+      <section class="users-section">
+        <ul id="users-list"></ul>
+      </section>
+    </main>
+  </body>
+</html>
